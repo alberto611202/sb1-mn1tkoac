@@ -1,0 +1,83 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  clients       Client[]
+}
+
+model Client {
+  id              String    @id @default(cuid())
+  firstName       String
+  lastName        String
+  idNumber        String    @unique
+  email           String?
+  phone           String
+  address         String
+  photoUrl        String?
+  documentUrls    String[]
+  riskScore       Float     @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdBy       User      @relation(fields: [userId], references: [id])
+  userId          String
+  loans           Loan[]
+}
+
+model Loan {
+  id              String    @id @default(cuid())
+  amount          Float
+  interestRate    Float
+  term            Int       // in months
+  startDate       DateTime
+  endDate         DateTime
+  status          LoanStatus @default(PENDING)
+  client          Client    @relation(fields: [clientId], references: [id])
+  clientId        String
+  payments        Payment[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Payment {
+  id              String    @id @default(cuid())
+  amount          Float
+  paymentDate     DateTime
+  paymentType     PaymentType
+  loan            Loan      @relation(fields: [loanId], references: [id])
+  loanId          String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum LoanStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+}
+
+enum PaymentType {
+  CASH
+  TRANSFER
+  CHECK
+}
